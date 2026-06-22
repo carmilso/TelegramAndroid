@@ -104,6 +104,7 @@ jobs:
           export ANDROID_HOME="$ANDROID_SDK_ROOT"
           export ANDROID_SDK="$ANDROID_SDK_ROOT"
           cd TMessagesProj/jni
+          ./build_dav1d_clang.sh arm64
           ./build_libvpx_clang.sh arm64
           ./build_ffmpeg_clang.sh arm64
           ./patch_ffmpeg.sh
