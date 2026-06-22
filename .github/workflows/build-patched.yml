@@ -44,7 +44,8 @@ jobs:
 
       - name: Install Android SDK components
         run: |
-          yes | "$ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager" \
+          SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT}}"
+          yes | "$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager" \
             "ndk;23.2.8568313" \
             "ndk;27.2.12479018" \
             "cmake;3.10.2.4988404"
@@ -99,8 +100,9 @@ jobs:
           NDK: ${{ steps.ndk-r21e.outputs.ndk-path }}
           NINJA_PATH: /usr/bin/ninja
         run: |
-          export ANDROID_HOME="${ANDROID_HOME}"
-          export ANDROID_SDK="${ANDROID_HOME}"
+          export ANDROID_SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT}}"
+          export ANDROID_HOME="$ANDROID_SDK_ROOT"
+          export ANDROID_SDK="$ANDROID_SDK_ROOT"
           cd TMessagesProj/jni
           ./build_libvpx_clang.sh arm64
           ./build_ffmpeg_clang.sh arm64
@@ -114,7 +116,9 @@ jobs:
           NINJA_PATH: /usr/bin/ninja
           NATIVE_DEPS_NDK_DIR: ${{ steps.ndk-r21e.outputs.ndk-path }}
         run: |
-          export ANDROID_SDK="${ANDROID_HOME}"
+          export ANDROID_SDK_ROOT="${ANDROID_HOME:-${ANDROID_SDK_ROOT}}"
+          export ANDROID_HOME="$ANDROID_SDK_ROOT"
+          export ANDROID_SDK="$ANDROID_SDK_ROOT"
           ./gradlew :TMessagesProj_App:assembleAfatFd_v8aRelease -x :TMessagesProj:buildNativeDeps --no-daemon
 
       - name: Locate and rename APK
