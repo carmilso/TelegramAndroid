@@ -69,6 +69,9 @@ jobs:
           sed -i -e '/play/d' TMessagesProj/build.gradle
           sed -i -e '/gms/d' TMessagesProj/src/main/java/org/telegram/messenger/CaptchaController.java
           ./prebuild_fdroid.sh 0 14577864 54d3ae230fd8f985ce9adccf08fbd9d6
+          sed -i -e '6 s/"$(ANDROID_SDK)"/$ANDROID_SDK/g' TMessagesProj/jni/build_boringssl.sh
+          sed -i -e 's/${cmakePath}cmake/$cmakePath/g' TMessagesProj/jni/build_boringssl.sh
+          sed -i -e '9 s/.$//' TMessagesProj/jni/build_boringssl.sh
           sed -i -e 's/ANDROID_API=16/ANDROID_API=21/g' TMessagesProj/jni/build_dav1d_clang.sh TMessagesProj/jni/build_ffmpeg_clang.sh
           sed -i -e 's/API=16/API=21/g' TMessagesProj/jni/build_boringssl.sh
           sed -i -e 's|${TOOLS_PREFIX}ld|${LLVM_BIN}/ld.lld|g' \
@@ -91,13 +94,26 @@ jobs:
                  TMessagesProj/jni/prepare.py
           rm -rf TMessagesProj_AppHuawei
 
+      - name: Build native dependencies upfront
+        env:
+          ANDROID_SDK: ${{ env.ANDROID_HOME }}
+          NDK: ${{ steps.ndk-r21e.outputs.ndk-path }}
+          NINJA_PATH: /usr/bin/ninja
+        run: |
+          cd TMessagesProj/jni
+          ./build_libvpx_clang.sh arm64
+          ./build_ffmpeg_clang.sh arm64
+          ./patch_ffmpeg.sh
+          ./patch_boringssl.sh
+          ./build_boringssl.sh
+
       - name: Build APK (arm64-v8a)
         env:
           ANDROID_SDK: ${{ env.ANDROID_HOME }}
           NDK: ${{ steps.ndk-r21e.outputs.ndk-path }}
           NINJA_PATH: /usr/bin/ninja
           NATIVE_DEPS_NDK_DIR: ${{ steps.ndk-r21e.outputs.ndk-path }}
-        run: ./gradlew :TMessagesProj_App:assembleAfatFd_v8aRelease --no-daemon
+        run: ./gradlew :TMessagesProj_App:assembleAfatFd_v8aRelease -x :TMessagesProj:buildNativeDeps --no-daemon
 
       - name: Locate and rename APK
         run: |
